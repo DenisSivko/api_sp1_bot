@@ -31,7 +31,7 @@ def parse_homework_status(homework):
     homework_status = homework.get('status')
     if homework_name is None or homework_status is None:
         logging.error(
-            f'Не удалось получить имя или статус дз! Ошибка: {TypeError}'
+            f'Не удалось получить данные о домашней работе! {homework}'
         )
         raise TypeError
     verdict = HOMEWORK_STATUSES[homework_status]
@@ -43,8 +43,7 @@ def get_homework_statuses(current_timestamp):
     Отправляет запрос об изменении статусов домашней работы.
     current_timestamp - метка времени с которой выбираются сообщения.
     """
-    if current_timestamp is None:
-        current_timestamp = int(time.time())
+    current_timestamp = current_timestamp or int(time.time())
     data = {
         'from_date': current_timestamp,
         'token': PRAKTIKUM_TOKEN,
@@ -61,7 +60,7 @@ def get_homework_statuses(current_timestamp):
         logging.error(
             f'Не удалось получить статус дз! Ошибка: {e}'
         )
-        raise requests.exceptions.RequestException
+        raise
 
 
 def send_message(message, bot_client):
@@ -72,12 +71,11 @@ def send_message(message, bot_client):
     """
     try:
         return bot_client.send_message(chat_id=CHAT_ID, text=message)
-        logging.info(f'Сообщение отправлено! Текст: {message}')
     except telegram.error.TelegramError as e:
         logging.error(
             f'Не удалось отправить сообщение! Ошибка: {e}'
         )
-        raise telegram.error.TelegramError
+        raise
 
 
 def main():
@@ -106,6 +104,7 @@ def main():
                 send_message(parse_homework_status(
                     new_homework.get('homeworks')[0]), bot_client
                 )
+                logging.info('Сообщение отправлено!')
             current_timestamp = new_homework.get(
                 'current_date', current_timestamp
             )
